@@ -1,0 +1,1603 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SoraKsa · An Afternoon Daydream</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;500;600;700&family=Noto+Sans+SC:wght@300;400;500&family=Ma+Shan+Zheng&display=swap');
+
+:root{
+  --dur:700ms;
+  --ink:#F3EFE6;
+  --bg1:#171229;
+  --bg2:#2B2046;
+  --accent:#E8C988;
+  --soft:rgba(243,239,230,0.45);
+}
+
+*{box-sizing:border-box; margin:0; padding:0;}
+
+html,body{
+  min-height:100%;
+  background:#0c0a14;
+  font-family:'Noto Sans SC', sans-serif;
+  overflow-x:hidden;
+}
+
+#stage{
+  position:relative;
+  width:100vw;
+  min-height:100vh;
+  background:linear-gradient(160deg, var(--bg1), var(--bg2));
+  transition:background var(--dur) ease;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:3.5rem 1rem;
+  overflow:visible;
+}
+
+#ambient{
+  position:absolute;
+  inset:0;
+  pointer-events:none;
+  z-index:0;
+  overflow:hidden;
+}
+
+#progress{
+  position:absolute;
+  top:28px;
+  left:50%;
+  transform:translateX(-50%);
+  display:flex;
+  gap:10px;
+  z-index:5;
+  opacity:0;
+  transition:opacity 500ms ease;
+}
+#progress.show{ opacity:0.8; }
+#progress .dot{
+  width:6px; height:6px; border-radius:50%;
+  background:var(--soft);
+  transition:background 400ms ease, transform 400ms ease;
+}
+#progress .dot.active{
+  background:var(--accent);
+  transform:scale(1.4);
+}
+
+#panel{
+  position:relative;
+  z-index:2;
+  width:min(640px, 88vw);
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  text-align:center;
+  gap:2.4rem;
+  opacity:0;
+  transform:translateY(14px);
+  transition:opacity var(--dur) ease, transform var(--dur) ease;
+}
+#panel.in{ opacity:1; transform:translateY(0); }
+
+.brandmark{
+  font-family:'Ma Shan Zheng', cursive;
+  font-size:1.6rem;
+  letter-spacing:0.3em;
+  color:var(--accent);
+  opacity:0.85;
+}
+
+.scene-text{
+  font-family:'Noto Serif SC', serif;
+  font-weight:400;
+  font-size:clamp(1.05rem, 2.4vw, 1.32rem);
+  line-height:2.15;
+  color:var(--ink);
+  letter-spacing:0.02em;
+  max-width:54ch;
+}
+
+.ending-title{
+  font-family:'Noto Serif SC', serif;
+  font-weight:500;
+  font-size:0.95rem;
+  letter-spacing:0.14em;
+  color:var(--accent);
+  opacity:0.85;
+  text-transform:uppercase;
+  margin-bottom:0.3rem;
+}
+
+.scene-text .ln{
+  display:block;
+  opacity:0;
+  transform:translateY(8px);
+  animation:rise 900ms ease forwards;
+}
+
+@keyframes rise{
+  to{ opacity:1; transform:translateY(0); }
+}
+
+#choices{
+  display:flex;
+  flex-direction:column;
+  gap:1.1rem;
+  width:100%;
+  max-width:420px;
+}
+
+.choice-btn{
+  background:none;
+  border:none;
+  border-top:1px solid var(--soft);
+  padding:1rem 0.4rem 0.3rem;
+  font-family:'Noto Serif SC', serif;
+  font-size:1rem;
+  color:var(--ink);
+  cursor:pointer;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:1rem;
+  text-align:left;
+  letter-spacing:0.02em;
+  line-height:1.6;
+  transition:opacity 300ms ease, padding-left 300ms ease;
+  opacity:0.88;
+}
+.choice-btn:hover, .choice-btn:focus-visible{
+  opacity:1;
+  padding-left:0.9rem;
+  outline:none;
+}
+.choice-btn .arrow{
+  font-family:'Noto Sans SC', sans-serif;
+  font-weight:300;
+  color:var(--accent);
+  flex-shrink:0;
+  transition:transform 300ms ease;
+}
+.choice-btn:hover .arrow{ transform:translateX(5px); }
+
+.continue-btn{
+  background:none;
+  border:1px solid var(--soft);
+  border-radius:999px;
+  padding:0.7rem 2.2rem;
+  font-family:'Noto Sans SC', sans-serif;
+  font-weight:300;
+  font-size:0.92rem;
+  letter-spacing:0.25em;
+  color:var(--ink);
+  cursor:pointer;
+  opacity:0;
+  animation:rise 900ms ease forwards;
+  transition:background 300ms ease, opacity 300ms ease;
+}
+.continue-btn:hover{ background:rgba(243,239,230,0.08); }
+
+#doors-list{
+  display:flex;
+  flex-wrap:wrap;
+  justify-content:center;
+  align-items:flex-end;
+  gap:clamp(10px, 3vw, 24px);
+  width:100%;
+}
+
+.door-row{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background:none;
+  border:none;
+  cursor:pointer;
+  padding:6px;
+  transition:transform 300ms ease, filter 300ms ease;
+}
+.door-row:hover, .door-row:focus-visible{
+  transform:translateY(-5px);
+  outline:none;
+}
+.door-icon{
+  flex-shrink:0;
+  display:block;
+  filter:brightness(0.95);
+  transition:filter 300ms ease;
+}
+.door-row:hover .door-icon{ filter:brightness(1.12); }
+.door-icon svg{ display:block; width:clamp(52px, 15vw, 84px); height:auto; }
+
+.door-text{
+  font-family:'Noto Serif SC', serif;
+  font-weight:400;
+  font-size:0.85rem;
+  line-height:1.75;
+  color:var(--ink);
+  letter-spacing:0.01em;
+}
+
+.doors-line{
+  font-size:0.92rem;
+  line-height:1.85;
+  max-width:56ch;
+}
+.doors-outro{
+  font-size:0.95rem;
+  opacity:0.9;
+}
+
+.ending-wrap{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:1.8rem;
+}
+
+.product-card{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:0.5rem;
+  padding-top:0.6rem;
+}
+.hidden-badge{
+  font-family:'Noto Sans SC', sans-serif;
+  font-size:0.62rem;
+  letter-spacing:0.2em;
+  text-transform:uppercase;
+  color:var(--accent);
+  border:1px solid var(--accent);
+  border-radius:999px;
+  padding:0.3rem 0.8rem;
+  opacity:0.85;
+  margin-bottom:0.3rem;
+}
+.product-mark{
+  width:34px; height:1px;
+  background:var(--accent);
+  opacity:0.7;
+}
+.artwork-placeholder{
+  width:140px;
+  height:140px;
+  border:1px dashed var(--soft);
+  border-radius:4px;
+  opacity:0.35;
+  margin:0.4rem 0;
+}
+.product-heading{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:0.45rem;
+}
+.product-name{
+  font-family:'Noto Serif SC', serif;
+  font-weight:600;
+  font-size:1.5rem;
+  color:var(--accent);
+  letter-spacing:0.04em;
+}
+.product-title{
+  font-family:'Noto Serif SC', serif;
+  font-weight:500;
+  font-size:1.15rem;
+  color:var(--ink);
+  opacity:0.88;
+  letter-spacing:0.02em;
+}
+.heading-star{
+  width:15px;
+  height:15px;
+  opacity:0.55;
+  display:block;
+}
+.heading-star svg{
+  width:100%;
+  height:100%;
+  display:block;
+  overflow:visible;
+}
+
+.end-actions{
+  display:flex;
+  gap:1rem;
+  margin-top:0.4rem;
+  flex-wrap:wrap;
+  justify-content:center;
+}
+.end-actions button, .end-actions a{
+  font-family:'Noto Sans SC', sans-serif;
+  font-size:0.86rem;
+  letter-spacing:0.1em;
+  padding:0.75rem 1.6rem;
+  border-radius:999px;
+  cursor:pointer;
+  transition:all 300ms ease;
+  text-decoration:none;
+  display:inline-block;
+  line-height:1.3;
+}
+.btn-primary{
+  background:var(--accent);
+  border:1px solid var(--accent);
+  color:#241A0C;
+  font-weight:500;
+}
+.btn-primary:hover{ filter:brightness(1.08); }
+.btn-ghost{
+  background:none;
+  border:1px solid var(--soft);
+  color:var(--ink);
+}
+.btn-ghost:hover{ background:rgba(243,239,230,0.08); }
+
+.personality-block{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:0.7rem;
+  padding:1.3rem 0;
+  border-top:1px solid var(--soft);
+  border-bottom:1px solid var(--soft);
+  width:100%;
+}
+.section-label{
+  font-family:'Noto Sans SC', sans-serif;
+  font-size:0.7rem;
+  letter-spacing:0.22em;
+  text-transform:uppercase;
+  color:var(--accent);
+  opacity:0.9;
+}
+.personality-text{
+  font-family:'Noto Serif SC', serif;
+  font-size:0.95rem;
+  line-height:1.85;
+  color:var(--ink);
+  max-width:48ch;
+}
+.personality-close{
+  font-family:'Noto Serif SC', serif;
+  font-style:italic;
+  font-size:0.92rem;
+  line-height:1.7;
+  color:var(--ink);
+  opacity:0.85;
+  max-width:48ch;
+}
+.product-archetype{
+  font-family:'Noto Sans SC', sans-serif;
+  font-size:0.7rem;
+  letter-spacing:0.22em;
+  text-transform:uppercase;
+  color:var(--ink);
+  opacity:0.55;
+}
+.product-notes{
+  font-family:'Noto Sans SC', sans-serif;
+  font-weight:300;
+  font-size:0.85rem;
+  letter-spacing:0.03em;
+  color:var(--ink);
+  opacity:0.78;
+  margin-top:0.25rem;
+}
+
+.star{
+  position:absolute;
+  border-radius:50%;
+  background:var(--ink);
+  opacity:0;
+  animation:twinkle 4s ease-in-out infinite;
+}
+@keyframes twinkle{
+  0%,100%{ opacity:0; }
+  50%{ opacity:0.7; }
+}
+
+.firefly{
+  position:absolute;
+  border-radius:50%;
+  opacity:0;
+  animation-name:firefly-glow;
+  animation-timing-function:ease-in-out;
+  animation-iteration-count:infinite;
+}
+@keyframes firefly-glow{
+  0%{ opacity:0; }
+  12%{ opacity:var(--peak-opacity, 0.8); }
+  30%{ opacity:calc(var(--peak-opacity, 0.8) * 0.9); }
+  100%{ opacity:0; }
+}
+
+.water-photo{
+  opacity:0.8;
+  filter:blur(3.6px);
+  animation:water-drift 22s ease-in-out infinite alternate;
+}
+@keyframes water-drift{
+  0%{ transform:scale(1) translate(0,0); }
+  100%{ transform:scale(1.09) translate(-1.5%,-1.5%); }
+}
+@media (prefers-reduced-motion: reduce){
+  .water-photo{ animation:none; }
+}
+
+.glint-patch{
+  position:absolute;
+  border-radius:50%;
+  mix-blend-mode:overlay;
+  background:radial-gradient(circle, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0.4) 45%, transparent 72%);
+  pointer-events:none;
+}
+@keyframes glint-pulse{
+  0%,100%{ opacity:0.15; }
+  50%{ opacity:1; }
+}
+@media (prefers-reduced-motion: reduce){
+  .glint-patch{ animation:none !important; opacity:0.5; }
+}
+
+.mist-blob{
+  position:absolute;
+  border-radius:50%;
+  opacity:0.35;
+  animation:drift 16s ease-in-out infinite;
+}
+@keyframes drift{
+  0%,100%{ transform:translate(0,0) scale(1); }
+  50%{ transform:translate(20px,-14px) scale(1.08); }
+}
+
+.glow-pulse{
+  animation:pulse 5s ease-in-out infinite;
+}
+@keyframes pulse{
+  0%,100%{ opacity:0.55; }
+  50%{ opacity:1; }
+}
+
+@media (prefers-reduced-motion: reduce){
+  .scene-text .ln, .continue-btn{ animation:none; opacity:1; transform:none; }
+  .star, .mist-blob, .glow-pulse{ animation:none; }
+}
+
+@media (max-width:520px){
+  .scene-text{ font-size:1rem; line-height:1.95; }
+}
+</style>
+</head>
+<body>
+
+<div id="stage">
+  <div id="ambient"></div>
+  <div id="progress">
+    <div class="dot" data-step="1"></div>
+    <div class="dot" data-step="2"></div>
+    <div class="dot" data-step="3"></div>
+    <div class="dot" data-step="4"></div>
+  </div>
+  <div id="panel"></div>
+</div>
+
+<script>
+const STORY = {
+  "start": {
+    "type": "intro",
+    "world": "shell",
+    "lines": [
+      "Work is done. You sink into an old yellow armchair.",
+      "Afternoon sunlight settles on your face. You fall asleep.",
+      "The room dissolves into mist. You drift down slowly into a dream."
+    ],
+    "next": "doors"
+  },
+  "doors": {
+    "type": "doors",
+    "world": "shell",
+    "step": 1,
+    "intro": "Four doors stand side by side under a starlit sky.",
+    "outro": "Which door do you choose?",
+    "choices": [
+      {
+        "world": "a",
+        "next": "A_intro",
+        "desc": "Short and wide, arched, faded teal, rust at the edges. Gentle light glows beneath it, like sun on a lake."
+      },
+      {
+        "world": "b",
+        "next": "B_intro",
+        "desc": "Tall and narrow, almost black-brown, carved with strange plant-like patterns. Something flickers behind it: orange, gold, perhaps green."
+      },
+      {
+        "world": "c",
+        "next": "C_intro",
+        "desc": "White and perfectly square. Its edges tremble like paper in the wind, though there is no wind."
+      },
+      {
+        "world": "d",
+        "next": "D_intro",
+        "desc": "Carved stone, worn smooth by time. Heat and incense drift beneath it."
+      }
+    ]
+  },
+  "A_intro": {
+    "type": "choice",
+    "world": "a",
+    "step": 2,
+    "text": "An empty tidal flat, its surface smooth as a mirror. Shallow water covers your ankles; above, a clear blue sky.\nEvery direction looks the same.",
+    "choices": [
+      {
+        "label": "Lie down and feel the stillness.",
+        "next": "A_lay"
+      },
+      {
+        "label": "Walk toward the flickering light on the horizon.",
+        "next": "A_walk"
+      }
+    ]
+  },
+  "A_lay": {
+    "type": "choice",
+    "world": "a",
+    "step": 3,
+    "text": "The water gently holds you. Your reflection blurs with body. Grass grows from your hair, your spine turning into stones. Your breath becomes wind, your blood a flowing spring. You've become a mountain.",
+    "choices": [
+      {
+        "label": "All beings live and die. Let time flow.",
+        "next": "A_lay_grow"
+      },
+      {
+        "label": "All beings should be eternal. Let time stop.",
+        "next": "A_lay_still"
+      }
+    ]
+  },
+  "A_lay_grow": {
+    "type": "choice",
+    "world": "a",
+    "step": 4,
+    "text": "Generations passed through your body. The world renews each day. ",
+    "choices": [
+      {
+        "label": "Enjoy the change.",
+        "next": "end_helios1"
+      },
+      {
+        "label": "Try to remember everything.",
+        "next": "end_yuzu1"
+      }
+    ]
+  },
+  "A_lay_still": {
+    "type": "choice",
+    "world": "a",
+    "step": 4,
+    "text": "All beings fall asleep. They dream of sadness, love, death, and adventure.",
+    "choices": [
+      {
+        "label": "Weave them an endless, vivid dream.",
+        "next": "end_yuzu2"
+      },
+      {
+        "label": "Allow those who are brave to break free from dreams. ",
+        "next": "end_helios2"
+      }
+    ]
+  },
+  "A_walk": {
+    "type": "choice",
+    "world": "a",
+    "step": 3,
+    "text": "Ahead, a golden bird made of pure light hovers above the waves, calling to you.",
+    "choices": [
+      {
+        "label": "Reach out curiously to touch it.",
+        "next": "A_walk_touch"
+      },
+      {
+        "label": "Keep your distance. Let it comes to you. ",
+        "next": "A_walk_distance"
+      }
+    ]
+  },
+  "A_walk_touch": {
+    "type": "choice",
+    "world": "a",
+    "step": 4,
+    "text": "The bird dissolves into pure light and absorbs your body. Your reflection is left behind.",
+    "choices": [
+      {
+        "label": "Leave your shadow. Fly to the world's edge.",
+        "next": "end_helios3"
+      },
+      {
+        "label": "Go back for your shadow.",
+        "next": "end_yuzu3"
+      }
+    ]
+  },
+  "A_walk_distance": {
+    "type": "choice",
+    "world": "a",
+    "step": 4,
+    "text": "The bird flies further away, but glances back.",
+    "choices": [
+      {
+        "label": "Follow it.",
+        "next": "end_helios4"
+      },
+      {
+        "label": "Watch it go.",
+        "next": "end_yuzu4"
+      }
+    ]
+  },
+  "end_helios1": {
+    "type": "end",
+    "world": "a",
+    "product": "Helios",
+    "title": "The Night Watcher",
+    "text": "The golden bird glides onward and disappears behind the horizon. But you know for sure it will return. "
+  },
+  "end_yuzu1": {
+    "type": "end",
+    "world": "a",
+    "product": "Yuzu Breeze",
+    "title": "The Collector of Memories",
+    "text": "You gather each season's memory. Years later, wind running through yuzu trees brings back familiar scents. Some things fade, but nothing truly leaves."
+  },
+  "end_yuzu2": {
+    "type": "end",
+    "world": "a",
+    "product": "Yuzu Breeze",
+    "title": "The Dream Weaver",
+    "text": "You weave strange changes into the sleeping world: forests migrating, oceans afloat. The dream slowly permeates reality. Somewhere, a fresh green branch silently emerges. "
+  },
+  "end_helios2": {
+    "type": "end",
+    "world": "a",
+    "product": "Helios",
+    "title": "The Keeper of Dreams",
+    "text": "You let those who are brave wake from dreams. A golden bird guides them into reality, and sunlight moves again."
+  },
+  "end_helios3": {
+    "type": "end",
+    "world": "a",
+    "product": "Helios",
+    "title": "The Restless Wanderer",
+    "text": "The sun never stops. When it seems to set, it is simply traveling toward another land that needs its light."
+  },
+  "end_yuzu3": {
+    "type": "end",
+    "world": "a",
+    "product": "Yuzu Breeze",
+    "title": "Becoming A Tree",
+    "text": "Your light merges with your shadow, like sunlight filtered through leaves. You hear summer raining inside your body. "
+  },
+  "end_helios4": {
+    "type": "end",
+    "world": "a",
+    "product": "Helios",
+    "title": "The Sun Chaser",
+    "text": "You chase the bird across the horizon. You stand on its wings and travel the world."
+  },
+  "end_yuzu4": {
+    "type": "end",
+    "world": "a",
+    "product": "Yuzu Breeze",
+    "title": "The Restless Wanderer",
+    "text": "The bird disappears behind the horizon. Your running movements create wind that ripples the water, a scent of yuzu emerging in air.  "
+  },
+  "B_intro": {
+    "type": "choice",
+    "world": "b",
+    "step": 2,
+    "text": "A rainforest in eternal moonlight. Lights flicker between the trees; something is watching you. You are lost in the forest.",
+    "choices": [
+      {
+        "label": "Follow the stream downhill.",
+        "next": "B_river"
+      },
+      {
+        "label": "Climb to higher ground.",
+        "next": "B_hill"
+      }
+    ]
+  },
+  "B_river": {
+    "type": "choice",
+    "world": "b",
+    "step": 3,
+    "text": "In the sound of the stream, you hear whispers: some gentle, some angry, some sad.",
+    "choices": [
+      {
+        "label": "Listen closely to what they're saying.",
+        "next": "B_river_listen"
+      },
+      {
+        "label": "Ignore the voices. Keep walking out.",
+        "next": "B_river_ignore"
+      }
+    ]
+  },
+  "B_river_listen": {
+    "type": "choice",
+    "world": "b",
+    "step": 4,
+    "text": "These are fragments of lost souls from different stages of humanity. You find them strangely luring.",
+    "choices": [
+      {
+        "label": "Stay, and listen forever.",
+        "next": "end_moonlight1"
+      },
+      {
+        "label": "Leave, carrying the rainforest's echoes with you.",
+        "next": "end_cinnamon1"
+      }
+    ]
+  },
+  "B_river_ignore": {
+    "type": "choice",
+    "world": "b",
+    "step": 4,
+    "text": "The stream flows to a lake. A blue-eyed white cat sits on a rock in moonlight. She conjures up water and turns voices in it into a beautiful melody in her paws.",
+    "choices": [
+      {
+        "label": "Listen to her story.",
+        "next": "end_moonlight2"
+      },
+      {
+        "label": "Ask her how to get out.",
+        "next": "end_cinnamon2"
+      }
+    ]
+  },
+  "B_hill": {
+    "type": "choice",
+    "world": "b",
+    "step": 3,
+    "text": "You climb into the densest trees, the path rising as moonlight thins. The flickering lights follow, then vanish. Your stomach growls. ",
+    "choices": [
+      {
+        "label": "Sit down and rest.",
+        "next": "B_hill_rest"
+      },
+      {
+        "label": "Keep walking. Look for clues.",
+        "next": "B_hill_continue"
+      }
+    ]
+  },
+  "B_hill_rest": {
+    "type": "choice",
+    "world": "b",
+    "step": 4,
+    "text": "You lean against a tree and fall asleep. You dream of something warm and sweet.",
+    "choices": [
+      {
+        "label": "Stay in the dream.",
+        "next": "end_moonlight3"
+      },
+      {
+        "label": "Wake up! Keep looking for a way out.",
+        "next": "end_cinnamon3"
+      }
+    ]
+  },
+  "B_hill_continue": {
+    "type": "choice",
+    "world": "b",
+    "step": 4,
+    "text": "You smell something sweet and spiced behind. Ahead, you hear a faint whispering sound.",
+    "choices": [
+      {
+        "label": "Walk toward the sound.",
+        "next": "end_moonlight4"
+      },
+      {
+        "label": "Turn back, follow the scent.",
+        "next": "end_cinnamon4"
+      }
+    ]
+  },
+  "end_moonlight1": {
+    "type": "end",
+    "world": "b",
+    "product": "Moonlight Scribe",
+    "title": "The Collector of Memories",
+    "text": "You stop finding a way out. Sitting eternally by the stream, you let the voices pass slowly through you."
+  },
+  "end_cinnamon1": {
+    "type": "end",
+    "world": "b",
+    "product": "Cinnamon Sniffer",
+    "title": "The Travelling Hobbit",
+    "text": "The voices whisper out a clue, and you carry their stories out of the forest. A soft bed and hot food await."
+  },
+  "end_moonlight2": {
+    "type": "end",
+    "world": "b",
+    "product": "Moonlight Scribe",
+    "title": "The Keeper of Dreams",
+    "text": "You are mesmerized by her melody. The cat curls into your lap, purring. You decide the way out can wait."
+  },
+  "end_cinnamon2": {
+    "type": "end",
+    "world": "b",
+    "product": "Cinnamon Sniffer",
+    "title": "The Restless Wanderer",
+    "text": "She laughs: \"Mind who's been following you.\" You recall a shadow behind, carrying the scent of cinnamon. Perhaps it can lead you out."
+  },
+  "end_moonlight3": {
+    "type": "end",
+    "world": "b",
+    "product": "Moonlight Scribe",
+    "title": "The Keeper of Dreams",
+    "text": "You decide not to wake. You follow the scent into moonlight, where a blue-eyed white cat seems to be waiting. "
+  },
+  "end_cinnamon3": {
+    "type": "end",
+    "world": "b",
+    "product": "Cinnamon Sniffer",
+    "title": "Sniffer's New Best Friend",
+    "text": "You wake. The scent is close: a warm cinnamon bun at your feet. A dachshund shares it with you, then leads the way out."
+  },
+  "end_moonlight4": {
+    "type": "end",
+    "world": "b",
+    "product": "Moonlight Scribe",
+    "title": "The Restless Wanderer",
+    "text": "You follow the sound. It hypnotized you. In your dream a white cat leads you through the rainforest. You wake to find the exit right ahead."
+  },
+  "end_cinnamon4": {
+    "type": "end",
+    "world": "b",
+    "product": "Cinnamon Sniffer",
+    "title": "Sniffer's New Best Friend",
+    "text": "You turn back and find the source: a hiding dachshund beside warm food and tiny pawprints. It leads you out of the forest."
+  },
+  "C_intro": {
+    "type": "choice",
+    "world": "c",
+    "step": 2,
+    "text": "Sun and moon share one sky. Wind rolls the hills like waves. You feel you've lost something, though you can't remember what. Far off, a small white figure runs.",
+    "choices": [
+      {
+        "label": "Cross the hills, look for what you lost.",
+        "next": "C_search"
+      },
+      {
+        "label": "Let it go. Chase the white figure.",
+        "next": "C_follow"
+      }
+    ]
+  },
+  "C_search": {
+    "type": "choice",
+    "world": "c",
+    "step": 3,
+    "text": "Stars flicker across the grassland, inside their sparks are lost memories. A silver bird carries them here from across the universe.",
+    "choices": [
+      {
+        "label": "Pick up the memories.",
+        "next": "C_search_pickup"
+      },
+      {
+        "label": "Ignore the memories, keep walking.",
+        "next": "C_search_ignore"
+      }
+    ]
+  },
+  "C_search_pickup": {
+    "type": "choice",
+    "world": "c",
+    "step": 4,
+    "text": "You catch star after star before they fade. In your palm is someone's summer.",
+    "choices": [
+      {
+        "label": "Bury them deep in the grassland.",
+        "next": "end_halcyon1"
+      },
+      {
+        "label": "Keep walking with them.",
+        "next": "end_mistcity1"
+      }
+    ]
+  },
+  "C_search_ignore": {
+    "type": "choice",
+    "world": "c",
+    "step": 4,
+    "text": "The stars flicker behind you. What you lost isn't in other people's memories.",
+    "choices": [
+      {
+        "label": "Ask the silver bird.",
+        "next": "end_halcyon2"
+      },
+      {
+        "label": "Give up the search.",
+        "next": "end_mistcity2"
+      }
+    ]
+  },
+  "C_follow": {
+    "type": "choice",
+    "world": "c",
+    "step": 3,
+    "text": "Running makes you forget the sense of loss. The white figure comes closer: a West Highland terrier. It leads you out the grassland and into a fog.",
+    "choices": [
+      {
+        "label": "Run into the fog after it.",
+        "next": "C_follow_chase"
+      },
+      {
+        "label": "Find a light source first, then follow.",
+        "next": "C_follow_light"
+      }
+    ]
+  },
+  "C_follow_chase": {
+    "type": "choice",
+    "world": "c",
+    "step": 4,
+    "text": "Everything disappears in the fog. Only your footsteps and a faint white figure remain.",
+    "choices": [
+      {
+        "label": "Speed up, catch the dog.",
+        "next": "end_mistcity3"
+      },
+      {
+        "label": "Slow down, walk through the fog.",
+        "next": "end_halcyon3"
+      }
+    ]
+  },
+  "C_follow_light": {
+    "type": "choice",
+    "world": "c",
+    "step": 4,
+    "text": "You stop at the fog's edge. A star glows warmly in your chest.",
+    "choices": [
+      {
+        "label": "Hold the light and walk in.",
+        "next": "end_mistcity4"
+      },
+      {
+        "label": "Leave the light to mark your way back.",
+        "next": "end_halcyon4"
+      }
+    ]
+  },
+  "end_halcyon1": {
+    "type": "end",
+    "world": "c",
+    "product": "Halcyon",
+    "title": "The Collector of Memories",
+    "text": "You bury the memories, one by one, in hollows of deep grass. The silver bird chirps around you, thanking you for keeping them safe."
+  },
+  "end_mistcity1": {
+    "type": "end",
+    "world": "c",
+    "product": "The Mist-City Adventurer",
+    "title": "The Restless Wanderer",
+    "text": "The memories slowly fade in your hands. The white shape keeps running; you realize it has never left your sight. You decide to follow."
+  },
+  "end_halcyon2": {
+    "type": "end",
+    "world": "c",
+    "product": "Halcyon",
+    "title": "Becoming Halcyon",
+    "text": "You catch up with the silver bird and ask about what you lost. It invites you onto its wings. You fly eternally in the grassland of memories."
+  },
+  "end_mistcity2": {
+    "type": "end",
+    "world": "c",
+    "product": "The Mist-City Adventurer",
+    "title": "The Two Adventurers",
+    "text": "A West Highland terrier runs up, tail wagging. It doesn't care what you lost; it only wants to play. You run with it and make new memories."
+  },
+  "end_mistcity3": {
+    "type": "end",
+    "world": "c",
+    "product": "The Mist-City Adventurer",
+    "title": "The Two Adventurers",
+    "text": "You run faster and catch its shadow. The fog clears at a city's edge. You venture into the city together."
+  },
+  "end_halcyon3": {
+    "type": "end",
+    "world": "c",
+    "product": "Halcyon",
+    "title": "The Hermit",
+    "text": "You slow down. The dog's footsteps fade. With nothing else to see in the fog, you finally see the shape of what you've been missing."
+  },
+  "end_mistcity4": {
+    "type": "end",
+    "world": "c",
+    "product": "The Mist-City Adventurer",
+    "title": "The Enlightened",
+    "text": "You cup the light in your hand. The fog parts a little. The dog sees it and runs back to you. Together, you head toward the fog's end."
+  },
+  "end_halcyon4": {
+    "type": "end",
+    "world": "c",
+    "product": "Halcyon",
+    "title": "Ariadne's Light",
+    "text": "You place the light at the border, where it quietly marks the way back. Then you enter the fog, unafraid."
+  },
+  "D_intro": {
+    "type": "choice",
+    "world": "d",
+    "step": 2,
+    "text": "An ancient desert road winds toward the unknown. A shimmering deer stands ahead, then vanishes into the sandstorm.",
+    "choices": [
+      {
+        "label": "Keep following the old road.",
+        "next": "D_road"
+      },
+      {
+        "label": "Follow the deer off the road.",
+        "next": "D_deer"
+      }
+    ]
+  },
+  "D_road": {
+    "type": "choice",
+    "world": "d",
+    "step": 3,
+    "text": "You press on, trusting the footprints of those who came before, until it splits into two directions, each giving distinct sounds.",
+    "choices": [
+      {
+        "label": "Follow the chanting.",
+        "next": "D_road_chant"
+      },
+      {
+        "label": "Follow the camel bells.",
+        "next": "D_road_bell"
+      }
+    ]
+  },
+  "D_road_chant": {
+    "type": "choice",
+    "world": "d",
+    "step": 4,
+    "text": "You reach a temple, earthen walls stand quietly in the wind. A low chant drifts through the doorway.",
+    "choices": [
+      {
+        "label": "Join the chant.",
+        "next": "end_kanaa1"
+      },
+      {
+        "label": "Sit quietly in a corner, and listen.",
+        "next": "end_siddh1"
+      }
+    ]
+  },
+  "D_road_bell": {
+    "type": "choice",
+    "world": "d",
+    "step": 4,
+    "text": "The bells lead you through a narrow canyon to cave temples. Murals emerge from the dark: a glorious marching procession of ancient caravans.",
+    "choices": [
+      {
+        "label": "Step into the mural, become part of it.",
+        "next": "end_shen1"
+      },
+      {
+        "label": "Gaze at the mural. Remember it.",
+        "next": "end_siddh2"
+      }
+    ]
+  },
+  "D_deer": {
+    "type": "choice",
+    "world": "d",
+    "step": 3,
+    "text": "You follow it into the sandstorm. You discern two vague sounds in the roaring storm.",
+    "choices": [
+      {
+        "label": "Follow the sound of running water.",
+        "next": "D_deer_water"
+      },
+      {
+        "label": "Follow the birdsongs.",
+        "next": "D_deer_bird"
+      }
+    ]
+  },
+  "D_deer_water": {
+    "type": "choice",
+    "world": "d",
+    "step": 4,
+    "text": "The sun fades behind ancient trees; a stream runs through a quiet grove full of exotic herbs. ",
+    "choices": [
+      {
+        "label": "Meditate quietly beneath a tree.",
+        "next": "end_siddh3"
+      },
+      {
+        "label": "Settle down in the grove.",
+        "next": "end_kanaa2"
+      }
+    ]
+  },
+  "D_deer_bird": {
+    "type": "choice",
+    "world": "d",
+    "step": 4,
+    "text": "It leads you to a valley between towering cliffs. A mountain spring runs below, luscious bushes grow along its way.",
+    "choices": [
+      {
+        "label": "Become the valley.",
+        "next": "end_shen2"
+      },
+      {
+        "label": "Leave the valley, continue the journey.",
+        "next": "end_kanaa3"
+      }
+    ]
+  },
+  "end_kanaa1": {
+    "type": "end",
+    "world": "d",
+    "product": "KanaaEss",
+    "title": "The Meditator",
+    "text": "No one turns around, yet a place was kept for you. Your voice flows with the mist of incense as it rises."
+  },
+  "end_siddh1": {
+    "type": "end",
+    "world": "d",
+    "product": "SiddhEss",
+    "title": "The Meditator",
+    "text": "The cool floor and dim light settle you. A mind at peace turns any place into a place of practice."
+  },
+  "end_shen1": {
+    "type": "end",
+    "world": "d",
+    "product": "ShenEss",
+    "title": "Lost in Myth ",
+    "text": "You gaze at the flowing colors and found yourself waking inside the painting. You follow the caravan into the past."
+  },
+  "end_siddh2": {
+    "type": "end",
+    "world": "d",
+    "product": "SiddhEss",
+    "title": "The Collector of Memories",
+    "text": "The flickering light makes the figures seem to breathe, alive in your memory ever since."
+  },
+  "end_siddh3": {
+    "type": "end",
+    "world": "d",
+    "product": "SiddhEss",
+    "title": "The Meditator",
+    "text": "The stream flows past, leaves sway gently. You settle into an eternal present."
+  },
+  "end_kanaa2": {
+    "type": "end",
+    "world": "d",
+    "product": "KanaaEss",
+    "title": "The Grove's Disciple ",
+    "text": "You live peacefully in a stable rhythm: water, fire, salt, and herbs, in pace with the changing seasons. "
+  },
+  "end_shen2": {
+    "type": "end",
+    "world": "d",
+    "product": "ShenEss",
+    "title": "Becoming the Valley",
+    "text": "You wander deeper into the valley until time stops mattering. Are you walking through the valley, or is the valley moving through you?"
+  },
+  "end_kanaa3": {
+    "type": "end",
+    "world": "d",
+    "product": "KanaaEss",
+    "title": "The Restless Wanderer",
+    "text": "You keep following the stream. The valley flourishes still, and your path stretches on."
+  }
+};
+
+const PRODUCTS = {
+  "Helios": {
+    "archetype": "Golden Bird",
+    "notes": [
+      "Neroli",
+      "Cinnamon",
+      "Amber"
+    ],
+    "personality": "You've never believed the sun truly sets. You keep moving toward warmth.",
+    "close": "Wherever the light's going, you're already halfway there."
+  },
+  "Halcyon": {
+    "archetype": "Silver Bird",
+    "notes": [
+      "Citrus",
+      "Lavender",
+      "Smoke"
+    ],
+    "personality": "Some make a room louder. You make it quieter, without trying.",
+    "close": "You were never afraid of silence. You just listened more closely."
+  },
+  "Yuzu Breeze": {
+    "archetype": "Cat Mountain",
+    "notes": [
+      "Yuzu",
+      "Jasmine",
+      "Vetiver"
+    ],
+    "personality": "You don't hold on. Things pass through, like weather.",
+    "close": "You carry very little, and somehow that's always been enough."
+  },
+  "Moonlight Scribe": {
+    "archetype": "Ragdoll · Pepper",
+    "notes": [
+      "Lilac",
+      "Iris",
+      "Amber"
+    ],
+    "personality": "You save your best thoughts for after everyone's asleep.",
+    "close": "You make solitude look like something worth having."
+  },
+  "The Mist-City Adventurer": {
+    "archetype": "Westie · Mudpie",
+    "notes": [
+      "Bergamot",
+      "Jasmine",
+      "Resin"
+    ],
+    "personality": "Staying too long makes you restless. You'd rather be lost, somewhere new.",
+    "close": "You'd rather write your own story than wait for someone else's to end."
+  },
+  "Cinnamon Sniffer": {
+    "archetype": "Dachshund · Peekaboo",
+    "notes": [
+      "Orange Peel",
+      "Cinnamon",
+      "Cassia"
+    ],
+    "personality": "You have a talent for small comforts: the right blanket, tea over advice.",
+    "close": "You're not shy. You just love things quietly, and up close."
+  },
+  "ShenEss": {
+    "archetype": "East Asia · Goodness of Health",
+    "notes": [
+      "Ginseng",
+      "Tangerine Peel",
+      "Sandalwood"
+    ],
+    "personality": "You've never cared for extremes. You like things steady.",
+    "close": "You are the calm that everyone else borrows."
+  },
+  "KanaaEss": {
+    "archetype": "Mesopotamia · Goodness of Ritual & Reverence",
+    "notes": [
+      "Agarwood",
+      "Clove",
+      "Cedar"
+    ],
+    "personality": "You take places seriously, the way you'd treat a guest in your home.",
+    "close": "You make an ordinary Tuesday feel worth having arrived for."
+  },
+  "SiddhEss": {
+    "archetype": "South Asia · Goodness of Joy & Ease",
+    "notes": [
+      "Agarwood",
+      "Myrrh",
+      "Patchouli"
+    ],
+    "personality": "Stillness isn't the same as doing nothing. It's paying attention: tea going cold.",
+    "close": "You made peace with taking your time. That was the point."
+  }
+};
+
+// Count how many endings share each title, so a title that occurs
+// exactly once across the whole story can be marked as a hidden/rare ending.
+const TITLE_COUNTS = {};
+Object.values(STORY).forEach(n => {
+  if(n.type === 'end' && n.title){
+    TITLE_COUNTS[n.title] = (TITLE_COUNTS[n.title] || 0) + 1;
+  }
+});
+
+const THEMES = {
+  shell:{ bg1:'#171229', bg2:'#2B2046', ink:'#F3EFE6', accent:'#E8C988', soft:'rgba(243,239,230,0.45)', mode:'dark' },
+  a:{ bg1:'#DCEEEA', bg2:'#9FC9C4', ink:'#1E3A38', accent:'#3E7C7A', soft:'rgba(30,58,56,0.35)', mode:'light' },
+  b:{ bg1:'#0E1410', bg2:'#1F3324', ink:'#D9E3DA', accent:'#E2A84B', soft:'rgba(217,227,218,0.35)', mode:'dark' },
+  c:{ bg1:'#5B4B7A', bg2:'#D98A6B', ink:'#FBF1E6', accent:'#F4D58D', soft:'rgba(251,241,230,0.4)', mode:'dark' },
+  d:{ bg1:'#3A2A1C', bg2:'#8C6A42', ink:'#F2E6D2', accent:'#E0A35C', soft:'rgba(242,230,210,0.4)', mode:'dark' }
+};
+
+const stage = document.getElementById('stage');
+const panel = document.getElementById('panel');
+const ambient = document.getElementById('ambient');
+const progress = document.getElementById('progress');
+
+let currentWorld = 'shell';
+
+function applyTheme(world){
+  const t = THEMES[world];
+  stage.style.setProperty('--bg1', t.bg1);
+  stage.style.setProperty('--bg2', t.bg2);
+  stage.style.setProperty('--ink', t.ink);
+  stage.style.setProperty('--accent', t.accent);
+  stage.style.setProperty('--soft', t.soft);
+  currentWorld = world;
+  renderAmbient(world);
+}
+
+function renderAmbient(world){
+  ambient.innerHTML = '';
+  const t = THEMES[world];
+
+  if(world === 'shell' || world === 'c'){
+    for(let i=0;i<26;i++){
+      const s = document.createElement('div');
+      s.className = 'star';
+      s.style.left = Math.random()*100+'%';
+      s.style.top = Math.random()*70+'%';
+      const size = Math.random()*2+1;
+      s.style.width = size+'px';
+      s.style.height = size+'px';
+      s.style.animationDelay = (Math.random()*4)+'s';
+      ambient.appendChild(s);
+    }
+  }
+
+  if(world === 'b'){
+    // bioluminescent lights: fireflies, eyes, "something else" watching in the dark —
+    // soft, diffuse orbs (radial-gradient, not a hard dot) so edges stay blurry.
+    // Placed on a jittered grid (stratified sampling) so they spread evenly across
+    // the whole frame instead of clustering or leaving gaps, with varied sizes
+    // (small glints to larger glows) for visual depth.
+    const jungleHues = ['#E2A84B','#6FD6C4','#C77DD6','#8FD16B','#5FB8E0','#E88A6B'];
+    const cols = 5, rows = 3; // 5x3 grid = 15 cells, one firefly per cell
+    const cellW = 100/cols, cellH = 74/rows;
+    let cell = 0;
+    for(let row=0; row<rows; row++){
+      for(let col=0; col<cols; col++){
+        const s = document.createElement('div');
+        s.className = 'firefly';
+        const hue = jungleHues[Math.floor(Math.random()*jungleHues.length)];
+        s.style.background = `radial-gradient(circle, ${hue} 0%, ${hue}99 25%, transparent 72%)`;
+        s.style.boxShadow = 'none';
+        s.style.borderRadius = '50%';
+        // jitter within the cell so placement still looks organic, not gridded
+        const left = col*cellW + cellW*0.15 + Math.random()*cellW*0.7;
+        const top = 6 + row*cellH + cellH*0.1 + Math.random()*cellH*0.8;
+        s.style.left = left+'%';
+        s.style.top = top+'%';
+        // wider size range: small distant glints to larger near glows
+        const size = 18+Math.random()*78;
+        s.style.width = size+'px';
+        s.style.height = size+'px';
+        s.style.setProperty('--peak-opacity', (0.4+Math.random()*0.4).toFixed(2));
+        s.style.animationDuration = (8+Math.random()*7)+'s';
+        s.style.animationDelay = (Math.random()*6)+'s';
+        ambient.appendChild(s);
+        cell++;
+      }
+    }
+  }
+
+  if(world === 'd'){
+    const m = document.createElement('div');
+    m.className = 'mist-blob glow-pulse';
+    m.style.background = `radial-gradient(circle, ${t.accent} 0%, transparent 70%)`;
+    m.style.width = '260px';
+    m.style.height = '260px';
+    m.style.left = '50%';
+    m.style.top = '60%';
+    m.style.transform = 'translate(-50%,-50%)';
+    ambient.appendChild(m);
+  }
+
+  if(world === 'a'){
+    const m = document.createElement('div');
+    m.className = 'mist-blob';
+    m.style.background = 'radial-gradient(ellipse, #ffffff 0%, transparent 70%)';
+    m.style.width = '320px';
+    m.style.height = '90px';
+    m.style.left = '50%';
+    m.style.top = '78%';
+    m.style.transform = 'translate(-50%,-50%)';
+    m.style.opacity = '0.18';
+    ambient.appendChild(m);
+  }
+}
+
+function updateProgress(step){
+  if(!step){
+    progress.classList.remove('show');
+    return;
+  }
+  progress.classList.add('show');
+  [...progress.children].forEach(d=>{
+    d.classList.toggle('active', parseInt(d.dataset.step) <= step);
+  });
+}
+
+function doorSVG(world){
+  const t = THEMES[world];
+  const cfgs = {
+    a: { w:78, h:118, top:'arch', fill:`linear-gradient(160deg, ${t.bg2}, ${t.bg1})`, leak: t.accent },
+    b: { w:64, h:130, top:'flat', fill:`linear-gradient(160deg, #1c140d, #2e2014)`, leak: '#E2A84B' },
+    c: { w:78, h:114, top:'flat', fill:`linear-gradient(160deg, #f4f0e6, #e3ded0)`, leak: '#D98A6B', jitter:true },
+    d: { w:82, h:128, top:'arch2', fill:`linear-gradient(160deg, #8c6a42, #5c4326)`, leak: '#E0A35C' }
+  };
+  const c = cfgs[world];
+  const gid = 'g_'+world;
+  let topPath = '';
+  if(c.top === 'arch'){
+    topPath = `M4,${c.h} V40 Q4,4 ${c.w/2},4 Q${c.w-4},4 ${c.w-4},40 V${c.h} Z`;
+  } else if(c.top === 'arch2'){
+    topPath = `M2,${c.h} V30 Q2,2 ${c.w/2},2 Q${c.w-2},2 ${c.w-2},30 V${c.h} Z`;
+  } else {
+    topPath = `M4,${c.h} V14 Q4,4 14,4 H${c.w-14} Q${c.w-4},4 ${c.w-4},14 V${c.h} Z`;
+  }
+  let texture = '';
+  if(world === 'b'){
+    texture = `<g stroke="#3a2c1a" stroke-width="0.6" opacity="0.5" fill="none">
+      <path d="M14,20 Q24,40 16,65 Q10,85 22,${c.h-10}"/>
+      <path d="M${c.w-16},25 Q${c.w-26},50 ${c.w-14},75 Q${c.w-8},95 ${c.w-20},${c.h-8}"/>
+      <path d="M${c.w/2-4},10 Q${c.w/2+6},45 ${c.w/2-6},90"/>
+    </g>`;
+  }
+  if(world === 'd'){
+    let diamonds = '';
+    for(let y=18; y<c.h-10; y+=16){
+      diamonds += `<rect x="${c.w/2-5}" y="${y}" width="8" height="8" transform="rotate(45 ${c.w/2-1} ${y+4})" fill="none" stroke="#3a2a1c" stroke-width="0.6" opacity="0.55"/>`;
+    }
+    texture = `<g>${diamonds}</g>`;
+  }
+  if(world === 'c'){
+    texture = `<path d="M5,${c.h} V16 Q5,8 14,7 Q22,5 30,7 Q40,9 50,7 Q60,5 68,7 Q${c.w-6},9 ${c.w-5},16 V${c.h}" fill="none" stroke="#b9b2a0" stroke-width="0.6" opacity="0.7"/>`;
+  }
+  if(world === 'a'){
+    texture = `<g stroke="#0f2e2c" stroke-width="0.7" opacity="0.4" fill="none">
+      <path d="M10,${c.h-6} Q${c.w/2},${c.h-14} ${c.w-10},${c.h-6}"/>
+      <path d="M14,${c.h-20} Q${c.w/2},${c.h-28} ${c.w-14},${c.h-20}"/>
+    </g>`;
+  }
+  return `
+  <svg viewBox="0 0 ${c.w} ${c.h+6}" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <linearGradient id="${gid}" x1="0" y1="0" x2="0" y2="1">
+        ${world==='a' ? `<stop offset="0%" stop-color="${t.bg2}"/><stop offset="100%" stop-color="${t.bg1}"/>` :
+          world==='b' ? `<stop offset="0%" stop-color="#1c140d"/><stop offset="100%" stop-color="#2e2014"/>` :
+          world==='c' ? `<stop offset="0%" stop-color="#f4f0e6"/><stop offset="100%" stop-color="#e3ded0"/>` :
+          `<stop offset="0%" stop-color="#8c6a42"/><stop offset="100%" stop-color="#5c4326"/>` }
+      </linearGradient>
+      <filter id="blur_${world}"><feGaussianBlur stdDeviation="2.2"/></filter>
+    </defs>
+    <path d="${topPath}" fill="url(#${gid})" stroke="rgba(0,0,0,0.35)" stroke-width="1"/>
+    ${texture}
+    <rect x="${c.w/2-1.1}" y="10" width="2.2" height="${c.h-16}" fill="${c.leak}" opacity="0.85" filter="url(#blur_${world})"/>
+    <rect x="${c.w/2-0.5}" y="10" width="1" height="${c.h-16}" fill="${c.leak}" opacity="0.95"/>
+  </svg>`;
+}
+
+function fadeTo(html, world, step){
+  panel.classList.remove('in');
+  setTimeout(()=>{
+    applyTheme(world);
+    updateProgress(step);
+    panel.innerHTML = html;
+    bindHandlers();
+    requestAnimationFrame(()=>panel.classList.add('in'));
+  }, 350);
+}
+
+function bindHandlers(){
+  panel.querySelectorAll('[data-next]').forEach(el=>{
+    el.addEventListener('click', ()=>render(el.dataset.next));
+  });
+  panel.querySelectorAll('[data-result]').forEach(el=>{
+    el.addEventListener('click', ()=>renderResult(STORY[el.dataset.result], el.dataset.result));
+  });
+  panel.querySelectorAll('[data-restart]').forEach(el=>{
+    el.addEventListener('click', ()=>render('start'));
+  });
+}
+
+function linesHTML(lines){
+  return lines.map((l,i)=>`<span class="ln" style="animation-delay:${0.3+i*0.55}s">${l}</span>`).join('');
+}
+
+function hexagramSVG(){
+  return `<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+    <polygon points="12,3 21,19 3,19" fill="none" stroke="#ffffff" stroke-width="1"/>
+    <polygon points="12,21 3,5 21,5" fill="none" stroke="#ffffff" stroke-width="1"/>
+  </svg>`;
+}
+
+function renderResult(node, id){
+  const p = PRODUCTS[node.product];
+  const isHidden = node.title && TITLE_COUNTS[node.title] === 1;
+  const html = `
+    <div class="ending-wrap">
+      <div class="product-card">
+        ${isHidden ? `<div class="hidden-badge">Hidden Ending</div>` : ''}
+        <div class="product-heading">
+          ${node.title ? `<span class="product-title">${node.title}</span><span class="heading-star">${hexagramSVG()}</span>` : ''}
+          <span class="product-name">${node.product}</span>
+        </div>
+        <div class="product-mark"></div>
+        <div class="artwork-placeholder" title="Artwork placeholder — ${id || ''}"></div>
+        <div class="product-notes">${p.notes.join(' · ')}</div>
+      </div>
+
+      <div class="end-actions">
+        <a class="btn-primary" href="https://soraksa.com" target="_blank" rel="noopener noreferrer">See More Incense Info</a>
+        <button class="btn-ghost" data-restart type="button">Take the Quiz Again</button>
+      </div>
+    </div>
+  `;
+  fadeTo(html, node.world, null);
+}
+
+function render(id){
+  const node = STORY[id];
+
+  if(node.type === 'intro'){
+    const html = `
+      <div class="brandmark">SoraKsa</div>
+      <p class="scene-text">${linesHTML(node.lines)}</p>
+      <button class="continue-btn" data-next="${node.next}" style="animation-delay:${0.3+node.lines.length*0.55+0.5}s">Continue</button>
+    `;
+    fadeTo(html, node.world, null);
+    return;
+  }
+
+  if(node.type === 'doors'){
+    const introHtml = `<span class="ln" style="animation-delay:0.1s">${node.intro}</span>`;
+    const rows = node.choices.map((ch,i) => `
+      <button class="door-row" data-next="${ch.next}" aria-label="${ch.desc}">
+        <span class="door-icon">${doorSVG(ch.world)}</span>
+      </button>
+    `).join('');
+    const html = `
+      <p class="scene-text doors-line">${introHtml}</p>
+      <div id="doors-list">${rows}</div>
+      <p class="scene-text doors-line doors-outro"><span class="ln" style="animation-delay:0.1s">${node.outro}</span></p>
+    `;
+    fadeTo(html, node.world, node.step);
+    return;
+  }
+
+  if(node.type === 'choice'){
+    const paras = node.text.split('\n').map(p=>`<span class="ln">${p}</span>`).join('');
+    const choices = node.choices.map(ch => `
+      <button class="choice-btn" data-next="${ch.next}">
+        <span>${ch.label}</span><span class="arrow">→</span>
+      </button>
+    `).join('');
+    const html = `
+      <p class="scene-text">${paras}</p>
+      <div id="choices">${choices}</div>
+    `;
+    fadeTo(html, node.world, node.step);
+    return;
+  }
+
+  if(node.type === 'end'){
+    const html = `
+      <div class="ending-wrap">
+        ${node.title ? `<div class="ending-title">${node.title}</div>` : ''}
+        <p class="scene-text">${node.text}</p>
+        <button class="continue-btn" data-result="${id}">View Your Scent Personality</button>
+      </div>
+    `;
+    fadeTo(html, node.world, null);
+    return;
+  }
+}
+
+render('start');
+</script>
+</body>
+</html>
